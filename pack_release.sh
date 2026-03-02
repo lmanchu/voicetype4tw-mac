@@ -3,14 +3,17 @@ set -e
 
 APP="dist/VoiceType4TW-Mac.app"
 FRAMEWORKS="$APP/Contents/Frameworks"
-PYFW="/Library/Frameworks/Python.framework/Versions/3.12/lib"
+# Use venv Python (has mlx_whisper, mlx_qwen3_asr, etc.)
+VENV_PYTHON="$(dirname "$0")/venv/bin/python"
+PYFW="$($VENV_PYTHON -c "import sysconfig; import os; print(os.path.dirname(sysconfig.get_path('stdlib')))")"
+SSL_LIB_DIR="/opt/homebrew/lib"  # Homebrew openssl location
 
 echo "=== [1/8] 清理舊的構建檔案 ==="
 rm -rf build dist
 rm -f VoiceType4TW-Mac-Release.zip
 
-echo "=== [2/8] 使用 py2app 進行打包 ==="
-python3 setup.py py2app
+echo "=== [2/8] 使用 py2app 進行打包 (venv Python) ==="
+"$VENV_PYTHON" setup.py py2app
 
 echo "=== [3/8] 修復 _ssl.so 的 dylib 連結路徑 ==="
 # py2app 會把 _ssl.so 的連結從絕對路徑改成 @executable_path，
@@ -20,8 +23,8 @@ echo "=== [3/8] 修復 _ssl.so 的 dylib 連結路徑 ==="
 SSL_SO=$(find "$APP" -name "_ssl*.so" | head -1)
 if [ -n "$SSL_SO" ]; then
     echo "  找到 _ssl: $SSL_SO"
-    install_name_tool -change @executable_path/../Frameworks/libssl.3.dylib "$PYFW/libssl.3.dylib" "$SSL_SO" 2>/dev/null || true
-    install_name_tool -change @executable_path/../Frameworks/libcrypto.3.dylib "$PYFW/libcrypto.3.dylib" "$SSL_SO" 2>/dev/null || true
+    install_name_tool -change @executable_path/../Frameworks/libssl.3.dylib "$SSL_LIB_DIR/libssl.3.dylib" "$SSL_SO" 2>/dev/null || true
+    install_name_tool -change @executable_path/../Frameworks/libcrypto.3.dylib "$SSL_LIB_DIR/libcrypto.3.dylib" "$SSL_SO" 2>/dev/null || true
     echo "  驗證連結:"
     otool -L "$SSL_SO" | grep -E "ssl|crypto"
 fi

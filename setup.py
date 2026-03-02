@@ -7,7 +7,7 @@ sys.setrecursionlimit(5000)
 APP = ['main.py']
 DATA_FILES = [
     'assets',
-    'soul.md',       # 會在首次啟動時複製到 Library/Application Support 避免打包後唯讀
+    'soul',          # soul/ 目錄（base.md + scenario/ + format/）
     'config.json',   # 會在首次啟動時複製到 Library/Application Support 避免打包後唯讀
     # 'memory',        # 不打包對話記憶
     # 'vocab',         # 不打包個人詞庫
@@ -35,7 +35,7 @@ OPTIONS = {
         'NSSupportsAutomaticGraphicsSwitching': True,
         'NSHighResolutionCapable': True,
     },
-    'packages': ['rumps', 'PyQt6', 'faster_whisper', 'pynput', 'pyperclip', 'sounddevice', '_sounddevice_data', 'httpx', 'certifi', 'objc', 'Quartz', 'mlx_whisper'],
+    'packages': ['rumps', 'PyQt6', 'faster_whisper', 'pynput', 'pyperclip', 'sounddevice', '_sounddevice_data', 'httpx', 'certifi', 'objc', 'Quartz', 'mlx_whisper', 'mlx_qwen3_asr', 'zhconv'],
     'includes': ['numpy', 'mlx'],
     'excludes': ['tkinter', 'unittest', 'torch'],
 }
