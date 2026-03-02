@@ -12,5 +12,4 @@ class Qwen3ASRSTT(BaseSTT):
         audio_np = np.frombuffer(audio_bytes, dtype=np.int16).astype(np.float32) / 32768.0
         # Pass the unpacked model to transcribe
         result = mlx_qwen3_asr.transcribe(audio_np, model=self._model, language=None)
-        # Convert TranscriptionResult to string
-        return str(result) if result else ""
+        return result.text.strip() if result and result.text else ""
