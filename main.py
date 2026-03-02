@@ -173,6 +173,9 @@ def build_stt(config: dict):
         from stt.openrouter_stt import OpenRouterSTT
         return OpenRouterSTT(api_key=config["openrouter_api_key"],
                              model=config.get("openrouter_model", "google/gemini-2.0-flash-001"))
+    elif engine == "qwen3_asr":
+        from stt.qwen3_asr import Qwen3ASRSTT
+        return Qwen3ASRSTT()
     else:
         from stt.local_whisper import LocalWhisperSTT
         return LocalWhisperSTT(model_size=config.get("whisper_model", "medium"))

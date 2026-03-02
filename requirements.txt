@@ -17,6 +17,7 @@ numpy
 # === MLX (Apple Silicon 加速, 選用) ===
 mlx>=0.20
 mlx-whisper>=0.4
+mlx-qwen3-asr>=0.2
 
 # === LLM (選用) ===
 openai>=1.0
