@@ -46,10 +46,18 @@ Acceptance Criteria:
 - ✅ python3 -c 'import stt.qwen3_asr' succeeds (no import errors)
 - ⚠️ Typecheck: No typecheck command configured in repo
 
-#### Story S2: Patch main.py build_stt() ⏳
-- [ ] Add branch for 'qwen3_asr' engine
-- [ ] Import Qwen3ASRSTT
-- [ ] Return instance with config
+#### Story S2: Patch main.py build_stt() and update requirements.txt ✅
+- Added `elif engine == 'qwen3_asr':` branch to `build_stt()` function in main.py
+- Import Qwen3ASRSTT and return instance
+- Verified requirements.txt already contains `mlx-qwen3-asr>=0.2` (correct version)
+- Syntax check passed for both main.py and stt/qwen3_asr.py
+- Commit: 1b6a1e3
+
+Acceptance Criteria:
+- ✅ main.py build_stt() has elif engine == 'qwen3_asr' branch
+- ✅ requirements.txt contains mlx-qwen3-asr>=0.2
+- ⚠️ python3 -c "import main" succeeded (syntax check)
+- ⚠️ Typecheck: No typecheck command configured in repo
 
 #### Story S3: Test integration ⏳
 - [ ] Verify audio format handling
