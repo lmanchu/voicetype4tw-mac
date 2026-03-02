@@ -12,6 +12,7 @@ certifi
 
 # === 語音辨識引擎 ===
 faster-whisper>=1.0
+groq
 numpy
 
 # === MLX (Apple Silicon 加速, 選用) ===

@@ -251,40 +251,33 @@ class VoiceTypeApp:
         self._recording_start = time.time()
         self._active_mode = mode
         print(f"[main] Recording started (mode: {mode})")
-        
+
         # 顯示錄音狀態與功能標籤
         prefix = ""
         suffix = ""
         scenario = self.config.get("active_scenario", "default")
-        
+
         if self.translation_target:
             prefix = f"譯:{self.translation_target}"
         elif self.config.get("action_mode", False):
             prefix = "助理"
         elif scenario != "default":
             prefix = "情境"
-            # 不再顯示具體名稱，保持簡潔
             suffix = ""
         elif self.config.get("llm_enabled") or mode == "llm":
             prefix = "AI"
-        
+
         self.indicator.set_prefix(prefix)
         self.indicator.set_label_suffix(suffix)
-            
         self.indicator.show()
         self.indicator.set_state("recording")
-        
-        # 透過指示器播放提示音 (這會在 GUI 執行緒上執行)
         self.indicator.play_beep()
-        
         self.recorder.start()
 
     def _on_stop(self, mode: str):
         # ── 1. Check Model Load State ───────────────────────────
         if not self._models_ready:
-            from PyQt6.QtWidgets import QMessageBox
-            self.indicator.hide()
-            QMessageBox.warning(None, "載入中", "AI 模型還在載入中（通常只有第一次啟動需要較長時間，請先在「偏好設定」中確認下載狀況），請稍候 30 秒再試一次！")
+            self.indicator.set_state("loading")
             return
 
         # Determine recording duration early
@@ -292,7 +285,7 @@ class VoiceTypeApp:
         print(f"[main] Recording stopped (mode: {mode}), duration: {duration:.2f}s")
         self.indicator.set_state("processing")
         self._on_level(0.0) # 強制將音量波形歸零，避免視覺殘留
-        
+
         # ── 2. Stop and get WAV bytes ───────────────────────────
         audio_bytes = self.recorder.stop()
 
@@ -739,16 +732,19 @@ class VoiceTypeApp:
 
     def _load_models_async(self):
         """背景執行緒：專門負責載入耗時的 STT 和 LLM 模型"""
-        print("[main] Starting async model loading...")
+        log.info("[main] Starting async model loading...")
         try:
             self.stt = build_stt(self.config)
             self.llm = build_llm(self.config)
             self._models_ready = True
-            print("[main] Models are READY.")
-            # 載入完後隱藏藍色橫條
+            log.info("[main] Models are READY.")
             self.indicator.hide()
+        except ModuleNotFoundError as e:
+            log.error(f"[main] Missing dependency: {e}. Run: pip install -r requirements.txt")
+            self.indicator.set_state("loading")  # 保持藍色提示，不閃退
         except Exception as e:
-            print(f"[main] FAILED to load models: {e}")
+            log.error(f"[main] FAILED to load models: {e}")
+            self.indicator.set_state("loading")
 
     def _on_set_template(self, output_text, name):
         """當使用者從 Menu Bar 選擇模板時。"""
