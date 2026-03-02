@@ -1,6 +1,7 @@
 from .base import BaseSTT
 import mlx_qwen3_asr
 import numpy as np
+import zhconv
 
 
 class Qwen3ASRSTT(BaseSTT):
@@ -10,6 +11,9 @@ class Qwen3ASRSTT(BaseSTT):
 
     def transcribe(self, audio_bytes: bytes, language: str = "zh") -> str:
         audio_np = np.frombuffer(audio_bytes, dtype=np.int16).astype(np.float32) / 32768.0
-        # Pass the unpacked model to transcribe
-        result = mlx_qwen3_asr.transcribe(audio_np, model=self._model, language=None)
-        return result.text.strip() if result and result.text else ""
+        if len(audio_np) < 1600:  # less than 0.1s at 16kHz — skip
+            return ""
+        result = mlx_qwen3_asr.transcribe(audio_np, model=self._model, language="zh")
+        text = result.text.strip() if result and result.text else ""
+        # Force Traditional Chinese output
+        return zhconv.convert(text, "zh-tw") if text else ""

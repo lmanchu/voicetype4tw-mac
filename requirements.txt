@@ -28,3 +28,4 @@ pyobjc-framework-Cocoa
 pyobjc-framework-Quartz
 pyobjc-framework-ApplicationServices
 pyobjc-framework-CoreText
+zhconv==1.4.3
