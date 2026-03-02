@@ -1,0 +1,71 @@
+LMA-52: voicetype4tw-mac: Add Qwen3-ASR 1.7B as STT engine
+
+## Codebase Patterns
+
+### STT Engine Implementation Pattern
+1. All STT engines inherit from `stt/base.py:BaseSTT`
+2. Required method: `transcribe(self, audio_bytes: bytes, language: str = "zh") -> str`
+3. Audio format: WAV bytes (16-bit, mono, 16kHz sample rate)
+4. Lazy loading: MLX-based models can be lazy-loaded in `__init__` or on first use
+
+### Audio Conversion Pattern
+```python
+# WAV bytes → float32 numpy array [-1, 1]
+import io
+import wave
+import numpy as np
+
+audio_io = io.BytesIO(audio_bytes)
+with wave.open(audio_io, "rb") as wf:
+    raw_data = wf.readframes(wf.getnframes())
+    audio_np = np.frombuffer(raw_data, dtype=np.int16).astype(np.float32) / 32768.0
+```
+
+### MLX Engine Pattern
+- Import MLX library in transcribe() method (lazy load)
+- Model loaded in `__init__` with repo path
+- Pass model to transcribe function
+
+### __init__.py Pattern
+- Export all STT engines in `stt/__init__.py`
+- Use relative imports: `from .qwen3_asr import Qwen3ASRSTT`
+
+### Progress Log
+
+#### Story S1: Create stt/qwen3_asr.py with Qwen3ASRSTT class ✅
+- Created `stt/qwen3_asr.py` implementing BaseSTT interface
+- Updated `stt/__init__.py` to export Qwen3ASRSTT
+- Added `mlx-qwen3-asr>=0.2` to requirements.txt (latest version is 0.2.3, not 0.3)
+- Test passed: `python3 -c "from stt.qwen3_asr import Qwen3ASRSTT; print('import ok')"`
+- Commit: e0d49be
+
+Acceptance Criteria:
+- ✅ stt/qwen3_asr.py exists in the repo
+- ✅ Qwen3ASRSTT class inherits from BaseSTT
+- ✅ transcribe() method signature matches BaseSTT interface
+- ✅ python3 -c 'import stt.qwen3_asr' succeeds (no import errors)
+- ⚠️ Typecheck: No typecheck command configured in repo
+
+#### Story S2: Patch main.py build_stt() ⏳
+- [ ] Add branch for 'qwen3_asr' engine
+- [ ] Import Qwen3ASRSTT
+- [ ] Return instance with config
+
+#### Story S3: Test integration ⏳
+- [ ] Verify audio format handling
+- [ ] Test transcription with sample audio
+- [ ] Compare results with other STT engines
+
+## Notes
+
+### Audio Format Issue
+The task specification says to use:
+```python
+audio_np = np.frombuffer(audio_bytes, dtype=np.int16).astype(np.float32) / 32768.0
+```
+
+However, `audio_bytes` is WAV format (from `AudioRecorder.stop()`), not raw int16. This will cause the WAV header to be interpreted as audio data. Need to verify if Qwen3-ASR can handle WAV directly or if proper WAV parsing is needed.
+
+### Dependencies
+- `mlx-qwen3-asr` installed: 0.2.3 (latest, task specified >=0.3 which doesn't exist)
+- Other missing dependencies installed during testing: `groq` (required for stt/__init__.py imports)
