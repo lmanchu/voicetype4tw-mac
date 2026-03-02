@@ -104,7 +104,7 @@ check_portaudio() {
 }
 
 # ── Clone 或更新專案 ──
-REPO_URL="https://github.com/jfamily4tw/voicetype4tw-mac.git"
+REPO_URL="https://github.com/lmanchu/voicetype4tw-mac.git"
 INSTALL_DIR="$HOME/VoiceType4TW-Mac"
 
 setup_project() {
@@ -149,7 +149,7 @@ install_deps() {
     # Apple Silicon: 安裝 MLX 加速引擎
     if [[ "$IS_APPLE_SILICON" -eq 1 ]]; then
         info "安裝 MLX 加速引擎（Apple Silicon 專用）..."
-        pip install mlx mlx-whisper -q 2>/dev/null || warn "MLX 安裝失敗，將使用 faster-whisper 模式"
+        pip install mlx mlx-whisper mlx_qwen3_asr -q 2>/dev/null || warn "MLX 安裝失敗，將使用 faster-whisper 模式"
     fi
     
     success "所有套件安裝完成"
