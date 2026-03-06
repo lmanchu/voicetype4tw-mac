@@ -60,6 +60,7 @@ xattr -cr "$APP"
 mkdir -p release_pack
 mv "$APP" release_pack/
 cp 首次開啟必看_解除損毀警告.md release_pack/
+cp install.command release_pack/
 
 cd release_pack
 zip -ry ../VoiceType4TW-Mac-Release.zip *
