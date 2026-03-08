@@ -59,7 +59,7 @@ if [ -n "$SSL_SO" ]; then
 fi
 
 echo "=== [4b/9] 修復 MLX dylib (libmlx.dylib 未被 py2app 自動複製) ==="
-MLX_SRC_LIB="$BUILD_DIR/venv/lib/python3.12/site-packages/mlx/lib/libmlx.dylib"
+MLX_SRC_LIB=$(find "$BUILD_DIR/venv/lib" -path "*/mlx/lib/libmlx.dylib" | head -1)
 MLX_CORE_SO=$(find "$APP" -name "core.cpython-*.so" -path "*/mlx/*" | head -1)
 if [ -n "$MLX_CORE_SO" ] && [ -f "$MLX_SRC_LIB" ]; then
     MLX_LIB_DIR="$(dirname "$MLX_CORE_SO")/lib"
