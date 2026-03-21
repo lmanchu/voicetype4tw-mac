@@ -1,13 +1,21 @@
 """
-VoiceType Mac — main entry point.
+VoiceType4TW — main entry point.
 Wires up all modules and starts the application.
+Cross-platform: macOS + Windows.
 """
+# CRITICAL on Windows: import torch before PyQt6 to avoid DLL loading conflict
+import platform
+if platform.system() == "Windows":
+    try:
+        import torch  # noqa: F401
+    except ImportError:
+        pass
+
 import threading
 import time
 import sys
 import os
 import certifi
-import platform
 from pathlib import Path
 
 # Fix SSL certificate issue in py2app bundles when using httpx/huggingface_hub

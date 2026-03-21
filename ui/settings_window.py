@@ -995,8 +995,15 @@ class SettingsWindow(QMainWindow):
     def _check_all_permissions(self):
         import logging
         log = logging.getLogger("voicetype")
-        
-        # 1. Accessibility — AXIsProcessTrusted 是 C 函數，必須用 ctypes
+
+        if platform.system() == "Windows":
+            # Windows: no special permissions needed for keyboard hooks or microphone
+            self.light_acc.set_status(True)
+            self.light_input.set_status(True)
+            self.light_mic.set_status(True)
+            return
+
+        # macOS: check Accessibility
         trusted = False
         try:
             import ctypes
@@ -1010,17 +1017,15 @@ class SettingsWindow(QMainWindow):
             trusted = False
         self.light_acc.set_status(trusted)
 
-        # 2. Input Monitoring（通常與輔助功能同步）
+        # macOS: Input Monitoring (follows Accessibility)
         self.light_input.set_status(trusted)
 
-        # 3. Microphone (macOS)
+        # macOS: Microphone
         try:
             import objc
-            # 使用 objc 動態載入 AVFoundation，此查詢方法不會觸發彈窗
             objc.loadBundle('AVFoundation', bundle_path='/System/Library/Frameworks/AVFoundation.framework', module_globals=globals())
-            # 'soun' is the type for 'audio' in AVFoundation (AVMediaTypeAudio)
             status = AVCaptureDevice.authorizationStatusForMediaType_('soun')
-            mic_ok = (status == 3) # 3 == AVAuthorizationStatusAuthorized
+            mic_ok = (status == 3)
             self.light_mic.set_status(mic_ok)
             log.info(f"[PERM] Microphone Status: {status} (Authorized: {mic_ok})")
         except Exception as e:

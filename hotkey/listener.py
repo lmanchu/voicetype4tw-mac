@@ -65,7 +65,12 @@ class HotkeyListener:
     def stop(self) -> None:
         if IS_WINDOWS:
             if self._win_listener:
-                self._win_listener.stop()
+                try:
+                    import keyboard
+                    keyboard.unhook_all()
+                except Exception:
+                    pass
+                self._win_listener = None
         else:
             if self._run_loop:
                 from Foundation import CFRunLoopStop
@@ -74,27 +79,44 @@ class HotkeyListener:
                 self._loop_thread.join(timeout=0.5)
         self._loop_thread = None
 
+    # Map config key names to `keyboard` module key names (Windows)
+    _KB_NAME_MAP = {
+        "alt_r": "right alt", "alt_l": "left alt",
+        "ctrl_r": "right ctrl", "ctrl_l": "left ctrl",
+        "shift_r": "right shift", "shift_l": "left shift",
+        "f1": "f1", "f2": "f2", "f3": "f3", "f4": "f4",
+        "f5": "f5", "f6": "f6", "f7": "f7", "f8": "f8",
+        "f9": "f9", "f10": "f10", "f11": "f11", "f12": "f12",
+        "f13": "f13", "f14": "f14", "f15": "f15",
+        "space": "space", "enter": "enter", "esc": "esc",
+    }
+
     def _start_windows(self):
+        """Use `keyboard` package on Windows. pynput's low-level hooks are
+        blocked by some Windows 11 security policies, while `keyboard`
+        works reliably via a different hook mechanism."""
         try:
-            from pynput import keyboard
-            
-            def on_press(key):
-                k_str = key_to_str(key)
-                for mode, cfg_key in self.configs.items():
-                    if cfg_key.lower() == k_str:
-                        self._handle_press(mode)
+            import keyboard
 
-            def on_release(key):
-                k_str = key_to_str(key)
-                for mode, cfg_key in self.configs.items():
-                    if cfg_key.lower() == k_str:
-                        self._handle_release(mode)
+            key_to_mode = {}
+            for mode, cfg_key in self.configs.items():
+                kb_name = self._KB_NAME_MAP.get(cfg_key.lower(), cfg_key.lower())
+                key_to_mode[kb_name] = mode
 
-            self._win_listener = keyboard.Listener(on_press=on_press, on_release=on_release)
-            self._win_listener.start()
-            print("[hotkey] Windows listener started.")
+            def on_event(e):
+                mode = key_to_mode.get(e.name)
+                if not mode:
+                    return
+                if e.event_type == "down":
+                    self._handle_press(mode)
+                elif e.event_type == "up":
+                    self._handle_release(mode)
+
+            keyboard.hook(on_event)
+            self._win_listener = True  # flag to track hook state
+            print(f"[hotkey] Windows listener started. Keys: {key_to_mode}")
         except ImportError:
-            print("[hotkey] Error: pynput not found on Windows.")
+            print("[hotkey] Error: keyboard package not found. pip install keyboard")
 
     def _start_macos(self):
         if self._loop_thread and self._loop_thread.is_alive():
