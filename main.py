@@ -3,9 +3,18 @@ VoiceType4TW — main entry point.
 Wires up all modules and starts the application.
 Cross-platform: macOS + Windows.
 """
-# CRITICAL on Windows: import torch before PyQt6 to avoid DLL loading conflict
+# CRITICAL on Windows: import torch before PyQt6 to avoid DLL loading conflict.
+# Also fix DLL search path for PyInstaller bundles.
 import platform
+import os
+import sys
 if platform.system() == "Windows":
+    _base = getattr(sys, '_MEIPASS', None)
+    if _base:
+        _torch_lib = os.path.join(_base, "torch", "lib")
+        if os.path.isdir(_torch_lib):
+            os.add_dll_directory(_torch_lib)
+        os.add_dll_directory(_base)
     try:
         import torch  # noqa: F401
     except ImportError:
